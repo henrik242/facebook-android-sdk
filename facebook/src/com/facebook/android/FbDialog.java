@@ -94,9 +94,8 @@ public class FbDialog extends Dialog {
         mTitle.setTypeface(Typeface.DEFAULT_BOLD);
         mTitle.setBackgroundColor(FB_BLUE);
         mTitle.setPadding(MARGIN + PADDING, MARGIN, MARGIN, MARGIN);
-        mTitle.setCompoundDrawablePadding(MARGIN + PADDING);
-        mTitle.setCompoundDrawablesWithIntrinsicBounds(
-                icon, null, null, null);
+        //mTitle.setCompoundDrawablePadding(MARGIN + PADDING);
+        //mTitle.setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
         mContent.addView(mTitle);
     }
     
