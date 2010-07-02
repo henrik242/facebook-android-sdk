@@ -20,10 +20,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.webkit.CookieSyncManager;
 
 /**
  * Main Facebook object for interacting with the Facebook developer API.
@@ -47,7 +50,7 @@ public class Facebook {
     protected static String OAUTH_ENDPOINT = 
         "https://graph.facebook.com/oauth/authorize";
     protected static String UI_SERVER = 
-        "http://www.facebook.com/connect/uiserver.php";
+        "https://www.facebook.com/connect/uiserver.php";
     protected static String GRAPH_BASE_URL = 
         "https://graph.facebook.com/";
     protected static String RESTSERVER_URL = 
@@ -104,10 +107,12 @@ public class Facebook {
         if (permissions.length > 0) {
             params.putString("scope", TextUtils.join(",", permissions));
         }
+        CookieSyncManager.createInstance(context);
         dialog(context, LOGIN, params, new DialogListener() {
 
-            @Override
             public void onComplete(Bundle values) {
+                // ensure any cookies set by the dialog are saved
+                CookieSyncManager.getInstance().sync(); 
                 setAccessToken(values.getString(TOKEN));
                 setAccessExpiresIn(values.getString(EXPIRES));
                 if (isSessionValid()) {
@@ -120,19 +125,16 @@ public class Facebook {
                 }                
             }
 
-            @Override
             public void onError(DialogError error) {
                 Log.d("Facebook-authorize", "Login failed: " + error);
                 listener.onError(error);
             }
 
-            @Override
             public void onFacebookError(FacebookError error) {
                 Log.d("Facebook-authorize", "Login failed: " + error);
                 listener.onFacebookError(error);
             }
-            
-            @Override
+
             public void onCancel() {
                 Log.d("Facebook-authorize", "Login cancelled");
                 listener.onCancel();
@@ -352,7 +354,13 @@ public class Facebook {
             parameters.putString(TOKEN, getAccessToken());
         }
         String url = endpoint + "?" + Util.encodeUrl(parameters);
-        new FbDialog(context, url, listener).show();
+        if (context.checkCallingOrSelfPermission(Manifest.permission.INTERNET)
+                != PackageManager.PERMISSION_GRANTED) {
+            Util.showAlert(context, "Error", 
+                    "Application requires permission to access the Internet");
+        } else {
+            new FbDialog(context, url, listener).show();
+        }
     }
 
     /**
@@ -408,7 +416,7 @@ public class Facebook {
      * @param expiresIn - duration in seconds
      */
     public void setAccessExpiresIn(String expiresIn) {
-        if (expiresIn != null) {
+        if (expiresIn != null && !expiresIn.equals("0")) {
             setAccessExpires(System.currentTimeMillis()
                     + Integer.parseInt(expiresIn) * 1000);
         }

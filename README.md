@@ -1,3 +1,5 @@
+*June 4, 2010: The project configuration has been updated based on user feedback to reduce the number of configuration problems in Eclipse, and to provide better support for those using other build tools, such as Ant.  If you pull this configuration from GitHub, you may need to update your project configuration, or create a new project with your source -- see the set up instructions below.*
+
 This open source Java library allows you to integrate Facebook into your Android application.
 
 Except as otherwise noted, the Facebook Connect Android SDK is licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0.html)
@@ -10,13 +12,15 @@ This is an _alpha_ release. In order to guide the development of the library and
 Known Issues
 ------------
 
-In the Facebook login dialog, the WebKit WebView password field misaligns text input and does not display correctly on Android 2.0 and 2.1.  This is reportedly corrected in Android 2.2 (Froyo): see http://code.google.com/p/android/issues/detail?id=5596
+1. In the Facebook login dialog, the WebKit WebView password field misaligns text input and does not display correctly on Android 2.0 and 2.1.  This is corrected in Android 2.2 (Froyo): see http://code.google.com/p/android/issues/detail?id=5596
 
-As of May 25, 2010, there is a race condition in the "stream.publish" UI dialog that may prevent the text input box from appearing; this will be corrected with the next server push.
+2. The example apps do not automatically redraw a dialog if the screen orientation changes.
 
-The example app does not automatically redraw a dialog if the screen orientation changes.
+3. Binary API parameters (such as uploading pictures) is not yet supported -- coming soon, but if you have already implemented it, feel free to send us a patch!
 
-Binary API parameters (such as uploading pictures) is not yet supported -- coming soon!
+4. The dialog webviews may be blank if an error occurs -- we are working on figuring these out and providing more debugging information.  Sorry for the frustration.
+
+5. If you see "an invalid next or cancel parameter was specified" message in the login dialog, then you need to migrate your application to the New Data Permissions.  This can be done by going to http://www.facebook.com/developers/apps.php then selecting the application you are testing with, and clicking "Edit Settings" (the third item underneath Total Users).  On the settings page, click on Migrations (bottom of the left menu), then set New Data Permissions to "Enabled".
 
 Getting Started
 ===============
@@ -28,43 +32,55 @@ Install necessary packages
 
 * Follow the (http://developer.android.com/sdk/index.html)[Android SDK Getting Started Guide].  You will probably want do set up a device emulator and debugging tools (such as using "adb logcat" for viewing the device debugging and error log).
 
-* Pull this repository from github
+* Pull the read-only repository from github
 
-     git clone git@github.com:facebook/facebook-android-sdk.git
+     e.g. "git clone git://github.com/facebook/facebook-android-sdk.git"
 
-* Import the Facebook SDK project into your Eclipse workspace. 
-  * Open the __File__ menu, click on __Import...__ and choose __Existing project into workspace__ under the General group. 
+     (if you have trouble, you could also try "git clone http://github.com/facebook/facebook-android-sdk.git")
+
+To build with Eclipse (3.5), do the following:
+
+* Create a new project for the Facebook SDK in your Eclipse workspace. 
+  * Open the __File__ menu, select New --> Project and choose __Android Project__ (inside the Android folder), then click Next.
+  * Select "Create project from existing source".
   * Select the __facebook__ subdirectory from within the git repository. 
-  * You should see an entry for __FacebookSDK__ listed under __Projects__. Click __Finish__.
+  * You should see the project properties populated (you might want to change the project name to something like "FacebookSDK").
+  * Click Finish to continue.
 
-* To ensure Eclipse can build the project, you will have to define the ANDROID_DIR build path variable. 
-  * Right click on the project, select __Build Path->Configure Build Path...__.
-  * In the __Java Build Path__ panel, select the __Libraries__ tab, and click __Add Variable..._.
-  * In the pop up, click on __Configure Variables...__ and then __New...__
-  * In the 'name' field enter __ANDROID_JAR__ and in the 'path' field click on __File...__ and select the android.jar file from the Android SDK directory on your local machine.
-
-__NOTE: If you run into trouble, add the android.jar file directly to the project's build path.  You can also try Build Clean... from the Eclipse Project menu or Fix Project Properties in the Android Tools on the context (right-click) menu for your project.__
-
-The Facebook SDK is now configured and ready to go.
+The Facebook SDK is now configured and ready to go.  
 
 Run the sample application
 --------------------------
 
-To test the SDK, you should run the simple sample application included.
+To test the SDK, you should run the simple sample application.  You can do this with Eclipse (3.5) as follows:
 
-* Import the sample application project into your Eclipse workspace.
-  * Import as above, but choose the __examples/simple__ subdirectory from within the git repository.
-  * You should see an entry for FacebookSDK-example.
+* Create the sample application in your workspace:
+  * Repeat as described above, but choose the __examples/simple__ subdirectory from within the git repository.
+  * Add your Facebook application ID to the Example.java file.  This Facebook app should use the New Data Permissions, as described in the known issues section above.  If you do not have a Facebook application ID, you can create one: http://www.facebook.com/developers/createapp.php
 
-Update the APP_ID variable in the Example class to your application ID.  Create a Run Configuration under Android Application and Launch the default activity.
+Build the project: from the Project menu, select "Build Project".  You may see a build error about missing "gen" files, but this should go away when you build the project -- if you have trouble, try running "Clean..." in the Project menu.
 
-To run a sample application on a real device, follow the instructions at http://developer.android.com/guide/developing/device.html 
+Run the application: from the Run menu, select "Run Configurations...".  Under Android Application, you can create a new run configuration: give it a name and select the simple Example project; use the default activity Launch Action.  See http://developer.android.com/guide/developing/eclipse-adt.html#RunConfig for more details.
+
+To run a sample application on a real device, ensure that the device has Internet access, and follow the instructions at http://developer.android.com/guide/developing/device.html 
 
 Create your own application
 ---------------------------
 
 * Create a Facebook Application: http://www.facebook.com/developers/createapp.php
+
 * Check out the mobile documentation: http://developers.facebook.com/docs/guides/mobile/
+
+* Add a dependency on the Facebook Android SDK library on your application:
+  - from the File menu, select "Properties"
+  - once the project Properties are displayed, open the Android section, which should list the build targets and libraries
+  - in the bottom "Library" section, click "Add..." and select the Facebook SDK project
+  - refer to http://developer.android.com/guide/developing/eclipse-adt.html#libraryProject for more details  
+
+* Ensure that your application has network access (android.permission.INTERNET) in the Android manifest:
+
+    <uses-permission android:name="android.permission.INTERNET"></uses-permission>
+
 
 Usage
 =====
