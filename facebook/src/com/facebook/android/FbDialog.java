@@ -16,8 +16,6 @@
 
 package com.facebook.android;
 
-import com.facebook.android.Facebook.DialogListener;
-
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -34,21 +32,23 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.FrameLayout.LayoutParams;
+
+import com.facebook.android.Facebook.DialogListener;
 
 public class FbDialog extends Dialog {
 
     static final int FB_BLUE = 0xFF6D84B4;
-    static final LayoutParams DEFAULT_LANDSCAPE = new LayoutParams(460, 260);
-    static final LayoutParams DEFAULT_PORTRAIT = new LayoutParams(280, 420);
-    static final LayoutParams FILL = 
-        new LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 
+    static final float[] DIMENSIONS_LANDSCAPE = {460, 260};
+    static final float[] DIMENSIONS_PORTRAIT = {280, 420};
+    static final FrameLayout.LayoutParams FILL = 
+        new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 
                          ViewGroup.LayoutParams.FILL_PARENT);
     static final int MARGIN = 4;
     static final int PADDING = 2;
-    static final String DISPLAY_STRING = "display=touch";
+    static final String DISPLAY_STRING = "touch";
     static final String FB_ICON = "icon.png";
     
     private String mUrl;
@@ -57,7 +57,7 @@ public class FbDialog extends Dialog {
     private WebView mWebView;
     private LinearLayout mContent;
     private TextView mTitle;
-   
+    
     public FbDialog(Context context, String url, DialogListener listener) {
         super(context);
         mUrl = url;
@@ -76,23 +76,26 @@ public class FbDialog extends Dialog {
         setUpTitle();
         setUpWebView();
         Display display = getWindow().getWindowManager().getDefaultDisplay();
-        addContentView(mContent, display.getWidth() < display.getHeight() ?
-                DEFAULT_PORTRAIT : DEFAULT_LANDSCAPE);
+        final float scale = getContext().getResources().getDisplayMetrics().density;
+        float[] dimensions = display.getWidth() < display.getHeight() ?
+        		DIMENSIONS_PORTRAIT : DIMENSIONS_LANDSCAPE;
+        addContentView(mContent, new FrameLayout.LayoutParams(
+        		(int) (dimensions[0] * scale + 0.5f),
+        		(int) (dimensions[1] * scale + 0.5f)));
     }
 
     private void setUpTitle() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        Drawable icon = Drawable.createFromStream(getClass().
-                getClassLoader().getResourceAsStream(FB_ICON), FB_ICON);
+        Drawable icon = getContext().getResources().getDrawable(
+                R.drawable.facebook_icon);
         mTitle = new TextView(getContext());
         mTitle.setText("Facebook");
         mTitle.setTextColor(Color.WHITE);
         mTitle.setTypeface(Typeface.DEFAULT_BOLD);
         mTitle.setBackgroundColor(FB_BLUE);
         mTitle.setPadding(MARGIN + PADDING, MARGIN, MARGIN, MARGIN);
-        mTitle.setCompoundDrawablePadding(MARGIN + PADDING);
-        mTitle.setCompoundDrawablesWithIntrinsicBounds(
-                icon, null, null, null);
+        //mTitle.setCompoundDrawablePadding(MARGIN + PADDING);
+        //mTitle.setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
         mContent.addView(mTitle);
     }
     
