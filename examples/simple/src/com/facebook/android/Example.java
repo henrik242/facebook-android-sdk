@@ -25,7 +25,6 @@ import com.facebook.android.SessionEvents.AuthListener;
 import com.facebook.android.SessionEvents.LogoutListener;
 
 import android.app.Activity;
-import android.app.AlertDialog.Builder;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
