@@ -36,7 +36,7 @@ public class Example extends Activity {
     
     // Your Facebook Application ID must be set before running this example
     // See http://www.facebook.com/developers/createapp.php
-    public static final String APP_ID = null;
+    public static final String APP_ID = "bef2531d19d24b426548bd02a5c84dd1";
     
     private static final String[] PERMISSIONS =
         new String[] {"publish_stream", "read_stream", "offline_access"};
