@@ -23,7 +23,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -86,17 +85,14 @@ public class FbDialog extends Dialog {
 
     private void setUpTitle() {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        Drawable icon = getContext().getResources().getDrawable(
-                R.drawable.facebook_icon);
         mTitle = new TextView(getContext());
         mTitle.setText("Facebook");
         mTitle.setTextColor(Color.WHITE);
         mTitle.setTypeface(Typeface.DEFAULT_BOLD);
         mTitle.setBackgroundColor(FB_BLUE);
         mTitle.setPadding(MARGIN + PADDING, MARGIN, MARGIN, MARGIN);
-        mTitle.setCompoundDrawablePadding(MARGIN + PADDING);
-        mTitle.setCompoundDrawablesWithIntrinsicBounds(
-                icon, null, null, null);
+        //mTitle.setCompoundDrawablePadding(MARGIN + PADDING);
+        //mTitle.setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
         mContent.addView(mTitle);
     }
     

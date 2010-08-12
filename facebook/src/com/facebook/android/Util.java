@@ -108,24 +108,33 @@ public final class Util {
         Log.d("Facebook-Util", method + " URL: " + url);
         HttpURLConnection conn = 
             (HttpURLConnection) new URL(url).openConnection();
-        conn.setRequestProperty("User-Agent", System.getProperties().
-                getProperty("http.agent") + " FacebookAndroidSDK");
-        if (!method.equals("GET")) {
-            // use method override
-            params.putString("method", method);
-            conn.setRequestMethod("POST");
-            conn.setDoOutput(true);
-            conn.getOutputStream().write(
-                    encodeUrl(params).getBytes("UTF-8"));
-        }
-        String response = "";
         try {
-            response = read(conn.getInputStream());
-        } catch (FileNotFoundException e) {
-            // Error Stream contains JSON that we can parse to a FB error
-            response = read(conn.getErrorStream());
-        }
-        return response;
+			conn.setRequestProperty("User-Agent", System.getProperties().getProperty("http.agent") + " FacebookAndroidSDK");
+			if (!method.equals("GET")) {
+				// use method override
+				params.putString("method", method);
+				conn.setRequestMethod("POST");
+				conn.setDoOutput(true);
+				conn.getOutputStream().write(encodeUrl(params).getBytes("UTF-8"));
+			}
+			int responseCode = conn.getResponseCode();
+			String response = "";
+
+			try {
+				response = read(conn.getInputStream());
+			} catch (FileNotFoundException e) {
+				// Error Stream contains JSON that we can parse to a FB error
+				response = read(conn.getErrorStream());
+			}
+
+			if (responseCode < 200 || responseCode >= 300) {
+				throw new HttpResponseException(responseCode, response);
+			}
+
+			return response;
+		} finally {
+			conn.disconnect();
+		}
     }
 
     private static String read(InputStream in) throws IOException {
@@ -203,6 +212,31 @@ public final class Util {
         }
         return json;
     }
+
+    public static class HttpResponseException extends IOException
+    {
+    	/**
+         * 
+         */
+        private static final long serialVersionUID = 6882826480702602097L;
+		private int responseCode;
+		public HttpResponseException(int theResponseCode)
+        {
+	        super();
+	        this.responseCode = theResponseCode;
+        }
+
+		public HttpResponseException(int theResponseCode, String detailMessage)
+        {
+	        super(detailMessage);
+	        this.responseCode = theResponseCode;
+        }
+
+		public int getResponseCode()
+		{
+			return this.responseCode;
+		}
+    }
     
     /**
      * Display a simple alert dialog with the given text and title.
@@ -220,5 +254,4 @@ public final class Util {
         alertBuilder.setMessage(text);
         alertBuilder.create().show();
     }
-
 }
