@@ -3,7 +3,6 @@ package com.facebook.android.tests;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URLEncoder;
 
 import org.json.JSONObject;
 
@@ -16,6 +15,7 @@ import com.facebook.android.AsyncFacebookRunner.RequestListener;
 import com.facebook.android.Facebook.DialogListener;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,7 +44,7 @@ public class Tests extends Activity {
     Button logoutButton;
     TextView logoutText;
     
-    Facebook authenticatedFacebook = new Facebook();
+    Facebook authenticatedFacebook = new Facebook(APP_ID);
     
     /** Called when the activity is first created. */
     @Override
@@ -68,8 +68,8 @@ public class Tests extends Activity {
         // button to test UI Server login method
         loginButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                authenticatedFacebook.authorize(Tests.this, 
-                        APP_ID, PERMISSIONS, new TestLoginListener());
+                authenticatedFacebook.authorize(Tests.this, PERMISSIONS,
+                        new TestLoginListener());
             }
         });
         
@@ -90,7 +90,12 @@ public class Tests extends Activity {
         
         runTestPublicApi();
     }
-    
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        authenticatedFacebook.authorizeCallback(requestCode, resultCode, data);
+    }
+
     public void runTestPublicApi() {
         if (testPublicApi()) {
             publicTestsText.setText("Public API tests passed");
@@ -110,7 +115,7 @@ public class Tests extends Activity {
     }
     
     public boolean testPublicApi() {
-        Facebook fb = new Facebook();
+        Facebook fb = new Facebook(APP_ID);
         try {
             Log.d("Tests", "Testing standard API call");
             JSONObject response = Util.parseJson(fb.request("4"));
@@ -140,7 +145,7 @@ public class Tests extends Activity {
     }
     
     public boolean testPublicErrors() {
-        Facebook fb = new Facebook();
+        Facebook fb = new Facebook(APP_ID);
         try {
             Bundle params = new Bundle();
             
@@ -162,7 +167,9 @@ public class Tests extends Activity {
                 return false;
             } catch (FacebookError e) {
                 Log.d("Tests", "*" + e.getMessage() + "*");
-                if (!e.getMessage().equals("Unsupported delete request.")) {
+                if (!e.getMessage().equals(
+                        "An access token is required to request this " +
+                        "resource.")) {
                     return false;
                 }
             }
@@ -222,8 +229,8 @@ public class Tests extends Activity {
             } catch (FacebookError e) {
                 Log.d("Tests", "*" + e.getMessage() + "*");
                 if (!e.getMessage().equals(
-                        "Some of the aliases you requested do not exist: " +
-                        "invalidinvalidinvalidinvalid")) {
+                        "(#803) Some of the aliases you requested do not " +
+                        "exist: invalidinvalidinvalidinvalid")) {
                     return false;
                 }
             }
@@ -252,8 +259,8 @@ public class Tests extends Activity {
                 }
             }
             
-            Log.d("Tests", "Testing that old API cannot be made without " +
-            		"access token");
+            Log.d("Tests", "Testing that old API request cannot be made " +
+                           "without access token");
             params.putString("method", "stream.publish");
             try {
                 Util.parseJson(fb.request(params));
@@ -334,9 +341,8 @@ public class Tests extends Activity {
             
             Log.d("Tests", "Testing graph API wall post");
             Bundle parameters = new Bundle();
-            parameters.putString("message", URLEncoder.encode("hello world"));
-            parameters.putString("description", 
-                    URLEncoder.encode("test test test"));
+            parameters.putString("message", "hello world");
+            parameters.putString("description", "test test test");
             response = authenticatedFacebook.request("me/feed", parameters, 
                     "POST");
             Log.d("Tests", "got response: " + response);
@@ -355,17 +361,16 @@ public class Tests extends Activity {
             Log.d("Tests", "Testing old API wall post");
             parameters = new Bundle();
             parameters.putString("method", "stream.publish");
-            String attachments = 
-                URLEncoder.encode("{\"name\":\"Name=Title\"," +
-                		"\"href\":\"http://www.google.fr/\",\"" +
-                		"caption\":\"Caption\",\"description\":\"Description" +
-                		"\",\"media\":[{\"type\":\"image\",\"src\":" +
-                		"\"http://www.kratiroff.com/logo-facebook.jpg\"," +
-                		"\"href\":\"http://developers.facebook.com/\"}]," +
-                		"\"properties\":{\"another link\":{\"text\":\"" +
-                		"Facebook homepage\",\"href\":\"http://www.facebook." +
-                		"com\"}}}");
-            parameters.putString("attachment", attachments);
+            parameters.putString("attachment", 
+                "{\"name\":\"Name=Title\"," +
+                "\"href\":\"http://www.google.fr/\",\"" +
+                "caption\":\"Caption\",\"description\":\"Description" +
+                "\",\"media\":[{\"type\":\"image\",\"src\":" +
+                "\"http://www.kratiroff.com/logo-facebook.jpg\"," +
+                "\"href\":\"http://developers.facebook.com/\"}]," +
+                "\"properties\":{\"another link\":{\"text\":\"" +
+                "Facebook homepage\",\"href\":\"http://www.facebook." +
+                "com\"}}}");;
             response = authenticatedFacebook.request(parameters);
             Log.d("Tests", "got response: " + response);
             if (response == null || response.equals("") || 
@@ -529,8 +534,6 @@ public class Tests extends Activity {
     
     public boolean testLogout() {
         try {
-            String oldAccessToken = authenticatedFacebook.getAccessToken();
-            
             Log.d("Tests", "Testing logout");
             String response = authenticatedFacebook.logout(this);
             Log.d("Tests", "Got logout response: *" + response + "*");
@@ -551,23 +554,11 @@ public class Tests extends Activity {
             
             Log.d("Tests", "Testing logout on unauthenticated object");
             try {
-                Util.parseJson(new Facebook().logout(this));
+                Util.parseJson(new Facebook(APP_ID).logout(this));
                 return false;
             } catch (FacebookError e) {
                 if (e.getErrorCode() != 101 || 
                         !e.getMessage().equals("Invalid API key") ) {
-                    return false;
-                }
-            }
-            
-            Log.d("Tests", "Testing that old access token no longer works");
-            Facebook invalidFb = new Facebook();
-            invalidFb.setAccessToken(oldAccessToken);
-            try {
-                Util.parseJson(invalidFb.request("me"));
-                return false;
-            } catch (FacebookError e) {
-                if (!e.getMessage().equals("Error processing access token.")) {
                     return false;
                 }
             }

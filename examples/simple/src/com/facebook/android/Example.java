@@ -16,15 +16,17 @@
 
 package com.facebook.android;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.facebook.android.BaseRequestListener;
-import com.facebook.android.BaseDialogListener;
-import com.facebook.android.SessionEvents.AuthListener;
-import com.facebook.android.SessionEvents.LogoutListener;
-
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -32,21 +34,16 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import com.facebook.android.SessionEvents.AuthListener;
+import com.facebook.android.SessionEvents.LogoutListener;
 
 
 public class Example extends Activity {
     
     // Your Facebook Application ID must be set before running this example
     // See http://www.facebook.com/developers/createapp.php
-    public static final String APP_ID = "bef2531d19d24b426548bd02a5c84dd1";
+    public static final String APP_ID = null;
     
-    private static final String[] PERMISSIONS =
-        new String[] {"publish_stream", "read_stream", "offline_access"};
     private LoginButton mLoginButton;
     private TextView mText;
     private Button mRequestButton;
@@ -75,13 +72,13 @@ public class Example extends Activity {
         mDeleteButton = (Button) findViewById(R.id.deletePostButton);
         mUploadButton = (Button) findViewById(R.id.uploadButton);
         
-       	mFacebook = new Facebook();
+       	mFacebook = new Facebook(APP_ID);
        	mAsyncRunner = new AsyncFacebookRunner(mFacebook);
        
         SessionStore.restore(mFacebook, this);
         SessionEvents.addAuthListener(new SampleAuthListener());
         SessionEvents.addLogoutListener(new SampleLogoutListener());
-        mLoginButton.init(mFacebook, PERMISSIONS);
+        mLoginButton.init(this, mFacebook);
         
         mRequestButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
@@ -129,7 +126,7 @@ public class Example extends Activity {
         
         mPostButton.setOnClickListener(new OnClickListener() {
             public void onClick(View v) {
-                mFacebook.dialog(Example.this, "stream.publish", 
+                mFacebook.dialog(Example.this, "feed",
                         new SampleDialogListener());          
             }
         });
@@ -138,6 +135,12 @@ public class Example extends Activity {
                 View.INVISIBLE);
     }
     
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+                                    Intent data) {
+        mFacebook.authorizeCallback(requestCode, resultCode, data);
+    }
+
     public class SampleAuthListener implements AuthListener {
         
         public void onAuthSucceed() {

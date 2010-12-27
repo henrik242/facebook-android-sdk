@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -42,21 +42,21 @@ public class FbDialog extends Dialog {
     static final int FB_BLUE = 0xFF6D84B4;
     static final float[] DIMENSIONS_LANDSCAPE = {460, 260};
     static final float[] DIMENSIONS_PORTRAIT = {280, 420};
-    static final FrameLayout.LayoutParams FILL = 
-        new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 
+    static final FrameLayout.LayoutParams FILL =
+        new FrameLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT,
                          ViewGroup.LayoutParams.FILL_PARENT);
     static final int MARGIN = 4;
     static final int PADDING = 2;
     static final String DISPLAY_STRING = "touch";
     static final String FB_ICON = "icon.png";
-    
+
     private String mUrl;
     private DialogListener mListener;
     private ProgressDialog mSpinner;
     private WebView mWebView;
     private LinearLayout mContent;
     private TextView mTitle;
-    
+
     public FbDialog(Context context, String url, DialogListener listener) {
         super(context);
         mUrl = url;
@@ -69,18 +69,19 @@ public class FbDialog extends Dialog {
         mSpinner = new ProgressDialog(getContext());
         mSpinner.requestWindowFeature(Window.FEATURE_NO_TITLE);
         mSpinner.setMessage("Loading...");
-        
+
         mContent = new LinearLayout(getContext());
         mContent.setOrientation(LinearLayout.VERTICAL);
         setUpTitle();
         setUpWebView();
         Display display = getWindow().getWindowManager().getDefaultDisplay();
         final float scale = getContext().getResources().getDisplayMetrics().density;
-        float[] dimensions = display.getWidth() < display.getHeight() ?
-        		DIMENSIONS_PORTRAIT : DIMENSIONS_LANDSCAPE;
+        float[] dimensions =
+            (display.getWidth() < display.getHeight())
+                    ? DIMENSIONS_PORTRAIT : DIMENSIONS_LANDSCAPE;
         addContentView(mContent, new FrameLayout.LayoutParams(
-        		(int) (dimensions[0] * scale + 0.5f),
-        		(int) (dimensions[1] * scale + 0.5f)));
+                (int) (dimensions[0] * scale + 0.5f),
+                (int) (dimensions[1] * scale + 0.5f)));
     }
 
     private void setUpTitle() {
@@ -95,7 +96,7 @@ public class FbDialog extends Dialog {
         //mTitle.setCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
         mContent.addView(mTitle);
     }
-    
+
     private void setUpWebView() {
         mWebView = new WebView(getContext());
         mWebView.setVerticalScrollBarEnabled(false);
@@ -114,12 +115,21 @@ public class FbDialog extends Dialog {
             Log.d("Facebook-WebView", "Redirect URL: " + url);
             if (url.startsWith(Facebook.REDIRECT_URI)) {
                 Bundle values = Util.parseUrl(url);
-                String error = values.getString("error_reason");
+
+                String error = values.getString("error");
+                if (error == null) {
+                    error = values.getString("error_type");
+                }
+
                 if (error == null) {
                     mListener.onComplete(values);
+                } else if (error.equals("access_denied") ||
+                           error.equals("OAuthAccessDeniedException")) {
+                    mListener.onCancel();
                 } else {
                     mListener.onFacebookError(new FacebookError(error));
                 }
+
                 FbDialog.this.dismiss();
                 return true;
             } else if (url.startsWith(Facebook.CANCEL_URI)) {
@@ -131,7 +141,7 @@ public class FbDialog extends Dialog {
             }
             // launch non-dialog URLs in a full browser
             getContext().startActivity(
-                    new Intent(Intent.ACTION_VIEW, Uri.parse(url))); 
+                    new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
             return true;
         }
 
@@ -159,7 +169,7 @@ public class FbDialog extends Dialog {
                 mTitle.setText(title);
             }
             mSpinner.dismiss();
-        }   
-        
+        }
+
     }
 }

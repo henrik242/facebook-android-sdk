@@ -27,6 +27,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,7 +38,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
-
 
 /**
  * Utility class supporting the Facebook Object.
@@ -81,7 +81,8 @@ public final class Util {
         boolean first = true;
         for (String key : parameters.keySet()) {
             if (first) first = false; else sb.append("&");
-            sb.append(key + "=" + parameters.getString(key));
+            sb.append(URLEncoder.encode(key) + "=" +
+                      URLEncoder.encode(parameters.getString(key)));
         }
         return sb.toString();
     }
@@ -92,7 +93,8 @@ public final class Util {
             String array[] = s.split("&");
             for (String parameter : array) {
                 String v[] = parameter.split("=");
-                params.putString(v[0], v[1]);
+                params.putString(URLDecoder.decode(v[0]),
+                                 URLDecoder.decode(v[1]));
             }
         }
         return params;
@@ -145,35 +147,6 @@ public final class Util {
         Log.d("Facebook-Util", method + " URL: " + url);
         HttpURLConnection conn = 
             (HttpURLConnection) new URL(url).openConnection();
-<<<<<<< HEAD
-        try {
-			conn.setRequestProperty("User-Agent", System.getProperties().getProperty("http.agent") + " FacebookAndroidSDK");
-			if (!method.equals("GET")) {
-				// use method override
-				params.putString("method", method);
-				conn.setRequestMethod("POST");
-				conn.setDoOutput(true);
-				conn.getOutputStream().write(encodeUrl(params).getBytes("UTF-8"));
-			}
-			int responseCode = conn.getResponseCode();
-			String response = "";
-
-			try {
-				response = read(conn.getInputStream());
-			} catch (FileNotFoundException e) {
-				// Error Stream contains JSON that we can parse to a FB error
-				response = read(conn.getErrorStream());
-			}
-
-			if (responseCode < 200 || responseCode >= 300) {
-				throw new HttpResponseException(responseCode, response);
-			}
-
-			return response;
-		} finally {
-			conn.disconnect();
-		}
-=======
         conn.setRequestProperty("User-Agent", System.getProperties().
                 getProperty("http.agent") + " FacebookAndroidSDK");
         if (!method.equals("GET")) {
@@ -190,12 +163,15 @@ public final class Util {
             }
             
             if (params.containsKey("access_token")) {
-            	String decoded_token = URLDecoder.decode(params.getString("access_token"));
+                String decoded_token =
+                    URLDecoder.decode(params.getString("access_token"));
             	params.putString("access_token", decoded_token);
             }
                      
             conn.setRequestMethod("POST");
-            conn.setRequestProperty("Content-Type", "multipart/form-data;boundary="+strBoundary);
+            conn.setRequestProperty(
+                    "Content-Type",
+                    "multipart/form-data;boundary="+strBoundary);
             conn.setDoOutput(true);
             conn.setDoInput(true);
             conn.setRequestProperty("Connection", "Keep-Alive");
@@ -227,7 +203,6 @@ public final class Util {
             response = read(conn.getErrorStream());
         }
         return response;
->>>>>>> b18714b71b3ee49a90f3209441f03e455cca1577
     }
 
     private static String read(InputStream in) throws IOException {
@@ -305,10 +280,10 @@ public final class Util {
         }
         return json;
     }
-
+    
     public static class HttpResponseException extends IOException
     {
-    	/**
+    /**
          * 
          */
         private static final long serialVersionUID = 6882826480702602097L;
