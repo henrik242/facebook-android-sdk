@@ -280,10 +280,10 @@ public final class Util {
         }
         return json;
     }
-    
+
     public static class HttpResponseException extends IOException
     {
-    /**
+    	/**
          * 
          */
         private static final long serialVersionUID = 6882826480702602097L;
